@@ -15,7 +15,7 @@ import { getAuthUser } from "@/app/api/library/auth";
 
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // ==============================
@@ -31,7 +31,8 @@ export async function PUT(
             return errorResponse("Forbidden - Admin only", 403, "FORBIDDEN");
         }
 
-        const categoryId = Number(params.id);
+        const { id } = await params;
+        const categoryId = Number(id);
 
         if (!categoryId) {
             return errorResponse("Invalid category ID", 400, "INVALID_ID");
@@ -151,7 +152,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Auth check
@@ -165,7 +166,8 @@ export async function DELETE(
       return errorResponse("Forbidden - Admin only", 403, "FORBIDDEN");
     }
 
-    const categoryId = Number(params.id);
+    const { id } = await params;
+    const categoryId = Number(id);
 
     if (!categoryId || Number.isNaN(categoryId)) {
       return errorResponse("Invalid category ID", 400, "INVALID_ID");

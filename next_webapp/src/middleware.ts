@@ -16,11 +16,7 @@ const intlMiddleware = createMiddleware({
  * Matched against the path with any locale prefix stripped.
  */
 
-// =======
-// const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics","/api/profile", "/api/categories"];
 const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics", "/api/profile", "/api/categories"];
-
-// >>>>>>> backend_work
 /**
  * Paths that are always publicly accessible and skip every auth check.
  * Matched against the bare path (locale prefix stripped).
