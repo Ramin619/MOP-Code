@@ -13,8 +13,6 @@ const UseCases: React.FC = () => {
   const [allCaseStudies] = useState<CaseStudy[]>(demoCaseStudies);
   const [filteredCaseStudies, setFilteredCaseStudies] =
     useState<CaseStudy[]>(demoCaseStudies);
-  const [selectedCaseStudy, setSelectedCaseStudy] =
-    useState<CaseStudy | null>(null);
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -47,7 +45,6 @@ const UseCases: React.FC = () => {
 
     if (!keyword) {
       setFilteredCaseStudies(allCaseStudies);
-      setSelectedCaseStudy(null);
       return;
     }
 
@@ -68,7 +65,6 @@ const UseCases: React.FC = () => {
     });
 
     setFilteredCaseStudies(filtered);
-    setSelectedCaseStudy(null);
   };
 
   return (
@@ -89,15 +85,9 @@ const UseCases: React.FC = () => {
             </div>
           </section>
 
-          {!selectedCaseStudy && <SearchBar onSearch={handleSearch} />}
+          <SearchBar onSearch={handleSearch} />
 
-          <PreviewComponent
-            caseStudies={filteredCaseStudies}
-            trendingCaseStudies={filteredCaseStudies}
-            selectedCaseStudy={selectedCaseStudy}
-            onSelectCaseStudy={setSelectedCaseStudy}
-            onBack={() => setSelectedCaseStudy(null)}
-          />
+          <PreviewComponent caseStudies={filteredCaseStudies} />
         </div>
       </main>
 

@@ -1,13 +1,13 @@
 "use client";
 
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import React, { useMemo, useState, useEffect } from "react";
 import {
-  ArrowLeftCircle,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
   FileText,
-  Sparkles,
 } from "lucide-react";
 import { CaseStudy } from "../../types";
 
@@ -15,16 +15,17 @@ const ITEMS_PER_PAGE = 9;
 
 interface CardProps {
   study: CaseStudy;
-  onClick: () => void;
 }
 
-const UseCaseCard: React.FC<CardProps> = ({ study, onClick }) => {
+const UseCaseCard: React.FC<CardProps> = ({ study }) => {
+  const params = useParams();
+  const locale = params.locale as string;
   const primaryTag = study.tags?.[0] || "Open Data";
 
   return (
-    <div
-      onClick={onClick}
-      className="group cursor-pointer rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-400 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+    <Link
+      href={`/${locale}/usecases/${study.id}`}
+      className="group block rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-400 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="mb-4 flex items-start justify-between gap-4">
         <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
@@ -59,26 +60,20 @@ const UseCaseCard: React.FC<CardProps> = ({ study, onClick }) => {
         <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
           View overview
         </span>
-        <ArrowRight className="text-green-600 transition group-hover:translate-x-1" size={18} />
+        <ArrowRight
+          className="text-green-600 transition group-hover:translate-x-1"
+          size={18}
+        />
       </div>
-    </div>
+    </Link>
   );
 };
 
 interface Props {
   caseStudies: CaseStudy[];
-  trendingCaseStudies: CaseStudy[];
-  selectedCaseStudy: CaseStudy | null;
-  onSelectCaseStudy: (s: CaseStudy) => void;
-  onBack: () => void;
 }
 
-const PreviewComponent: React.FC<Props> = ({
-  caseStudies,
-  selectedCaseStudy,
-  onSelectCaseStudy,
-  onBack,
-}) => {
+const PreviewComponent: React.FC<Props> = ({ caseStudies }) => {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -91,73 +86,6 @@ const PreviewComponent: React.FC<Props> = ({
     const start = (page - 1) * ITEMS_PER_PAGE;
     return caseStudies.slice(start, start + ITEMS_PER_PAGE);
   }, [caseStudies, page]);
-
-  if (selectedCaseStudy) {
-    return (
-      <section className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
-        <button
-          onClick={onBack}
-          className="mb-6 inline-flex items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-        >
-          <ArrowLeftCircle size={18} />
-          Back to all use cases
-        </button>
-
-        <div className="mb-6 inline-flex items-center rounded-full bg-green-50 px-4 py-1.5 text-sm font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
-          <Sparkles size={16} className="mr-2" />
-          Selected Use Case
-        </div>
-
-        <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-          {selectedCaseStudy.name}
-        </h2>
-
-        <p className="mb-6 max-w-3xl text-base leading-7 text-gray-600 dark:text-gray-300">
-          {selectedCaseStudy.description}
-        </p>
-
-        <div className="mb-8 flex flex-wrap gap-3">
-          {selectedCaseStudy.tags?.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-[#f7f9fb] p-5 dark:bg-gray-700">
-            <p className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-300">
-              Focus
-            </p>
-            <p className="text-base font-semibold text-gray-900 dark:text-white">
-              Practical open-data application
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-[#f7f9fb] p-5 dark:bg-gray-700">
-            <p className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-300">
-              Format
-            </p>
-            <p className="text-base font-semibold text-gray-900 dark:text-white">
-              Tiled case study preview
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-[#f7f9fb] p-5 dark:bg-gray-700">
-            <p className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-300">
-              Keywords
-            </p>
-            <p className="text-base font-semibold text-gray-900 dark:text-white">
-              {selectedCaseStudy.tags?.slice(0, 2).join(" • ") || "Open Data"}
-            </p>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   if (!caseStudies.length) {
     return (
@@ -200,11 +128,7 @@ const PreviewComponent: React.FC<Props> = ({
 
       <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {visibleStudies.map((study) => (
-          <UseCaseCard
-            key={study.id}
-            study={study}
-            onClick={() => onSelectCaseStudy(study)}
-          />
+          <UseCaseCard key={study.id} study={study} />
         ))}
       </section>
 
