@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import React, { useMemo, useState, useEffect } from "react";
 import {
   ArrowRight,
@@ -20,50 +21,60 @@ interface CardProps {
 const UseCaseCard: React.FC<CardProps> = ({ study }) => {
   const params = useParams();
   const locale = params.locale as string;
-  const primaryTag = study.tags?.[0] || "Open Data";
+  const categoryLabel =
+  study.category?.replace(/_/g, " ") || "General";
 
   return (
     <Link
       href={`/${locale}/usecases/${study.id}`}
-      className="group block rounded-[24px] border border-gray-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-400 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      className="group block overflow-hidden rounded-[24px] border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-400 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
-          {primaryTag}
-        </span>
+      <div className="relative h-44 w-full bg-gray-100 dark:bg-gray-700">
+        {study.image ? (
+          <Image
+            src={study.image}
+            alt={study.title}
+            fill
+            className="object-cover transition duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-green-600 dark:text-green-300">
+            <FileText size={34} />
+          </div>
+        )}
+      </div>
 
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-green-600 dark:bg-gray-700 dark:text-green-300">
-          <FileText size={20} />
+      <div className="p-5">
+       
+
+        <h3 className="mb-3 text-xl font-bold leading-snug text-gray-900 dark:text-white">
+          {study.title}
+        </h3>
+
+        <p className="mb-5 min-h-[72px] text-sm leading-6 text-gray-600 dark:text-gray-300">
+          {study.description}
+        </p>
+
+        <div className="mb-5 flex flex-wrap gap-2">
+          {study.tags?.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
-      </div>
 
-      <h3 className="mb-3 text-xl font-bold leading-snug text-gray-900 dark:text-white">
-        {study.name}
-      </h3>
-
-      <p className="mb-5 min-h-[72px] text-sm leading-6 text-gray-600 dark:text-gray-300">
-        {study.description}
-      </p>
-
-      <div className="mb-5 flex flex-wrap gap-2">
-        {study.tags?.slice(0, 3).map((tag) => (
-          <span
-            key={tag}
-            className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-          >
-            {tag}
+        <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-700">
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+            View overview
           </span>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-700">
-        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-          View overview
-        </span>
-        <ArrowRight
-          className="text-green-600 transition group-hover:translate-x-1"
-          size={18}
-        />
+          <ArrowRight
+            className="text-green-600 transition group-hover:translate-x-1"
+            size={18}
+          />
+        </div>
       </div>
     </Link>
   );

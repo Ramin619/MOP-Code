@@ -17,10 +17,13 @@ export type SearchParams = {
   category: CATEGORY;
 };
 
-export type CaseStudy = {
+
+export interface CaseStudy {
   id: number;
-  name: string;
+  title: string;
   description: string;
   tags: string[];
-  filename?: string;
-};
+  htmlFile: string;
+  category?: CATEGORY | string;
+  image?: string;
+}

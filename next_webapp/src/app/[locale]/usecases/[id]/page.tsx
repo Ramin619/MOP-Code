@@ -65,7 +65,7 @@ const UseCasePage: React.FC = () => {
           </div>
 
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-black dark:text-white sm:text-5xl">
-            {useCase.name}
+            {useCase.title}
           </h1>
 
           <p className="mb-6 text-lg text-gray-600 dark:text-gray-300">
