@@ -133,3 +133,51 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+// ==============================
+// GET /api/categories
+// Fetch all categories (with optional search filter)
+// ==============================
+export async function GET(request: NextRequest) {
+  try {
+    // 1. Auth check
+    const { userId } = getAuthUser(request);
+    if (!userId) {
+      return errorResponse("User not authenticated", 401, "UNAUTHORIZED");
+    }
+
+    // 2. Get search query param
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search");
+
+    // 3. Build query
+    let query = supabase
+      .from("categories")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    // If search param provided, filter by category name
+    if (search && search.trim().length > 0) {
+      query = query.ilike("category_name", `%${search.trim()}%`);
+    }
+
+    // 4. Execute query
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[GET /api/categories] fetch error:", error);
+      return errorResponse("Failed to fetch categories", 500, "DB_FETCH_ERROR");
+    }
+
+    // 5. Return response
+    return NextResponse.json({
+      success: true,
+      data: data,
+      count: data.length,
+    });
+
+  } catch (error) {
+    console.error("[GET /api/categories] unexpected error:", error);
+    return errorResponse("Internal Server Error", 500, "INTERNAL_ERROR");
+  }
+}
