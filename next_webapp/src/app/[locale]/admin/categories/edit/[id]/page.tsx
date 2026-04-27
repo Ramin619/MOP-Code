@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { BookOpen, ImagePlus, Save, X } from "lucide-react";
+import { FolderOpen, ImagePlus, Save } from "lucide-react";
 
 function getAuthHeaders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const userId = user.userId ?? user.id ?? "";
+  const userId = user.userId ?? user.id ?? localStorage.getItem("userId") ?? "";
   const roleId = user.roleId ?? user.role_id ?? "";
   const token = user.token ?? "";
   return {
@@ -17,15 +17,12 @@ function getAuthHeaders() {
   };
 }
 
-export default function EditUseCasePage() {
+export default function EditCategoryPage() {
   const router = useRouter();
   const { locale, id } = useParams() as { locale: string; id: string };
 
-  const [title, setTitle] = useState("");
+  const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
-  const [existingTags, setExistingTags] = useState<string[]>([]);
   const [existingImgUrl, setExistingImgUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -38,35 +35,30 @@ export default function EditUseCasePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!id) return;
-    const headers = getAuthHeaders();
-
-    Promise.all([
-      fetch(`/api/usecases/${id}`, { headers }).then((r) => r.json()),
-      fetch(`/api/usecases/${id}/tags`, { headers }).then((r) => r.json()),
-      fetch("/api/categories", { headers }).then((r) => r.json()),
-    ])
-      .then(([ucJson, tagsJson, catJson]) => {
-        if (!ucJson.success) {
-          setFetchError(ucJson.message || ucJson.error || "Use case not found.");
+    async function loadCategory() {
+      setFetchLoading(true);
+      setFetchError("");
+      try {
+        const res = await fetch(`/api/categories/${id}`, {
+          headers: getAuthHeaders(),
+        });
+        const json = await res.json();
+        if (!json.success) {
+          setFetchError(json.message || "Category not found.");
           return;
         }
-        const uc = ucJson.data;
-        setTitle(uc.title || "");
-        setDescription(uc.description || "");
-        setCategoryId(uc.category_id ? String(uc.category_id) : "");
-        setExistingImgUrl(uc.cover_img || null);
-        setImagePreview(uc.cover_img || null);
+        setCategoryName(json.data.category_name || "");
+        setDescription(json.data.description || "");
+        setExistingImgUrl(json.data.cover_img || null);
+        setImagePreview(json.data.cover_img || null);
+      } catch {
+        setFetchError("Failed to load category.");
+      } finally {
+        setFetchLoading(false);
+      }
+    }
 
-        // Tags: 404 means no tags, not an error
-        if (tagsJson.success && Array.isArray(tagsJson.data)) {
-          setExistingTags(tagsJson.data.map((t: any) => t.name));
-        }
-
-        if (catJson.success) setCategories(catJson.data || []);
-      })
-      .catch(() => setFetchError("Failed to load use case."))
-      .finally(() => setFetchLoading(false));
+    if (id) loadCategory();
   }, [id]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -89,8 +81,7 @@ export default function EditUseCasePage() {
       if (imageFile) {
         const formData = new FormData();
         formData.append("file", imageFile);
-        formData.append("folder", "usecases");
-        formData.append("bucket", "usecase-images");
+        formData.append("folder", "categories");
 
         const uploadRes = await fetch("/api/upload", {
           method: "POST",
@@ -107,41 +98,41 @@ export default function EditUseCasePage() {
         coverImgUrl = uploadJson.url;
       }
 
-      const res = await fetch(`/api/usecases/${id}`, {
+      const res = await fetch(`/api/categories/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
-          title,
+          category_name: categoryName,
           description,
           cover_img: coverImgUrl,
-          category_id: categoryId ? Number(categoryId) : null,
         }),
       });
       const json = await res.json();
 
       if (!json.success) {
-        setSaveError(json.message || json.error || "Failed to update use case.");
+        setSaveError(json.message || "Failed to update category.");
         setSaving(false);
         return;
       }
 
-      router.push(`/${locale}/admin/use-cases`);
+      router.push(`/${locale}/admin/categories`);
     } catch {
-      setSaveError("Failed to update use case.");
+      setSaveError("Failed to update category.");
       setSaving(false);
     }
   }
 
   return (
     <div className="rounded-3xl border border-[#E5E7EB] bg-white p-8 shadow-sm">
+
       {/* Header */}
       <div className="mb-7 flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAFBF0] text-[#1F8F50]">
-          <BookOpen size={22} />
+          <FolderOpen size={22} />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Use Case</h2>
-          <p className="text-sm text-[#687280]">Update this use case's details</p>
+          <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Category</h2>
+          <p className="text-sm text-[#687280]">Update this category's details</p>
         </div>
       </div>
 
@@ -157,6 +148,7 @@ export default function EditUseCasePage() {
 
       {!fetchLoading && !fetchError && (
         <form onSubmit={handleSubmit} className="space-y-6">
+
           {saveError && (
             <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
               {saveError}
@@ -171,30 +163,11 @@ export default function EditUseCasePage() {
             <input
               type="text"
               required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter use case title"
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              placeholder="Enter category title"
               className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none transition focus:border-[#2DBE6C] focus:bg-white"
             />
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[#1A1A1A]">
-              Category
-            </label>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none focus:border-[#2DBE6C] focus:bg-white"
-            >
-              <option value="">Select a category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.category_name}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Description */}
@@ -206,38 +179,17 @@ export default function EditUseCasePage() {
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter description"
+              placeholder="Enter category description"
               className="w-full resize-none rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none transition focus:border-[#2DBE6C] focus:bg-white"
             />
           </div>
 
-          {/* Tags (read-only — tag updates require a dedicated backend endpoint) */}
-          {existingTags.length > 0 && (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#1A1A1A]">
-                Tags
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {existingTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#EAFBF0] px-3 py-1 text-xs font-medium text-[#1F8F50]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-[#687280]">
-                Tags can be assigned when creating a use case.
-              </p>
-            </div>
-          )}
-
-          {/* Cover Image */}
+          {/* Image Upload */}
           <div>
             <label className="mb-3 block text-sm font-medium text-[#1A1A1A]">
-              Cover Image
+              Category Image
             </label>
+
             <div
               onClick={() => fileInputRef.current?.click()}
               className="cursor-pointer rounded-2xl border-2 border-dashed border-[#CFEFD9] bg-[#F8FFFA] p-8 text-center transition hover:bg-[#F0FFF6]"
@@ -254,7 +206,7 @@ export default function EditUseCasePage() {
                     <ImagePlus size={22} />
                   </div>
                   <h3 className="mt-3 text-sm font-semibold text-[#1A1A1A]">
-                    Upload cover image
+                    Upload category image
                   </h3>
                   <p className="mt-1 text-sm text-[#687280]">
                     Click to browse · JPEG, PNG, WebP · max 5 MB
@@ -262,6 +214,7 @@ export default function EditUseCasePage() {
                 </>
               )}
             </div>
+
             <input
               ref={fileInputRef}
               type="file"
@@ -269,6 +222,7 @@ export default function EditUseCasePage() {
               className="hidden"
               onChange={handleFileChange}
             />
+
             {imagePreview && (
               <button
                 type="button"
@@ -292,16 +246,17 @@ export default function EditUseCasePage() {
               className="inline-flex items-center gap-2 rounded-full bg-[#2DBE6C] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#1F8F50] disabled:opacity-60"
             >
               <Save size={18} />
-              {saving ? "Saving..." : "Update Use Case"}
+              {saving ? "Saving..." : "Update Category"}
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/${locale}/admin/use-cases`)}
+              onClick={() => router.push(`/${locale}/admin/categories`)}
               className="rounded-full border border-[#E5E7EB] px-6 py-3 text-sm font-medium text-[#687280] transition hover:bg-[#F9FAFB]"
             >
               Cancel
             </button>
           </div>
+
         </form>
       )}
     </div>
