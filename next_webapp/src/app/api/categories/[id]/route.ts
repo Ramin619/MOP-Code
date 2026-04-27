@@ -9,6 +9,45 @@ import { errorResponse } from "@/app/api/library/errorResponse";
 import { getAuthUser } from "@/app/api/library/auth";
 
 // ==============================
+// GET /api/categories/:id
+// Fetch single category (auth required)
+// ==============================
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = getAuthUser(request);
+    if (!userId) {
+      return errorResponse("User not authenticated", 401, "UNAUTHORIZED");
+    }
+
+    const { id } = await params;
+    const categoryId = Number(id);
+
+    if (!categoryId || Number.isNaN(categoryId)) {
+      return errorResponse("Invalid category ID", 400, "INVALID_ID");
+    }
+
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("id", categoryId)
+      .single();
+
+    if (error || !data) {
+      return errorResponse("Category not found", 404, "NOT_FOUND");
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Get Category Error:", error);
+    return errorResponse("Internal Server Error", 500, "INTERNAL_ERROR");
+  }
+}
+
+// ==============================
 // PUT /api/categories/:id
 // Update Category (ADMIN ONLY)
 // ==============================

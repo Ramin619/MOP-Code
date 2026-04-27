@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             return errorResponse(validationError, 400, "VALIDATION_ERROR");
         }
 
-        const { category_name, description } = cleanData;
+        const { category_name, description, cover_img } = cleanData;
 
         // ==============================
         // 4. Check duplicate category
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
                 {
                     category_name,
                     description: description ?? null,
+                    cover_img: cover_img ?? null,
                     created_by: Number(userId),
                 },
             ])
